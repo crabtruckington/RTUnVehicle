@@ -1,7 +1,7 @@
 # RogueTechUnVehicle
 Removes 90% of the vehicle spawns from RogueTech
 
-#Usage
+# Usage
 1) Download Ruby from https://www.ruby-lang.org/en/downloads/
 2) `gem install json`
 3) Download this ruby script, `rtUnvehicle.rb` and place it in its own directory
