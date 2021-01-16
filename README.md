@@ -22,5 +22,5 @@ All of the above applies to HareBrainedSchemes and the official BattleTech game,
 
 This script is provided "As Is".
 
-#Thank Yous
+# Thank Yous
 You Know Who, thank you for the inspiration to create this after being extremely rude and dismissive about this for the past few years, and denying its possible because its too much work. Took 30 minutes. I play how and what I want, thank you.
