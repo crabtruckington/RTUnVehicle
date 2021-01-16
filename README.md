@@ -12,4 +12,5 @@ Removes 90% of the vehicle spawns from RogueTech
 
 # Disclaimer
 I do not own or participate in the official RogueTech mod. I am not endorsed by the official RogueTech team in any way, in fact with this script, quite the opposite I expect. DO NOT bring any problems to the RogueTech team, they will NOT help you out. There is no support, official or otherwise. You use this script and modify the files at your own risk.
+
 All of the above applies to HareBrainedSchemes and the official BattleTech game, branding, whatever, in perpetuity across the universe. I make no claims to ownership of any content, provided or otherwise. All respective trademark or copyright holders rights are retained, and any reference to trademark or copyright here is done under the assumption of Fair Use.
