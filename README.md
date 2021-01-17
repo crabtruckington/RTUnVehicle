@@ -4,13 +4,12 @@ Do you want all the features of RogueTech without having every enemy lance compr
 This script will modify the Lance files in roguetech to remove vehicles from nearly every Lance type, except lances that are only comprised of vehicles, and specialty lances made for missions where it is intended you fight vehicles.
 
 # Usage
-1) Download Ruby version 2.7 from https://www.ruby-lang.org/en/downloads/
-2) `gem install json`
-3) Download this ruby script, `RTUnvehicle.rb` and place it in its own directory
-4) Go to your BattleTech installation folder, and copy `\Mods\RogueTech Core\Lances` into the same directory as `RTUnvehicle.rb`
-5) Open a cmd prompt, navigate to the directory you placed the `Lances` folder and `rtUnvehicle.rb`, and type `ruby RTUnvehicle.rb` to run the script
-6) Follow the instructions provided to copy the new Lance files into the RT directory.
-7) Enjoy the game about mechs not having 90% of the spawns be vehicles!
+1) Download Ruby from https://www.ruby-lang.org/en/downloads/ . Version 2.7 is recommended but anything from 2.6+ should work
+2) Download this ruby script, `RTUnvehicle.rb` and place it in its own directory
+3) Go to your BattleTech installation folder, and copy `\Mods\RogueTech Core\Lances` into the same directory as `RTUnvehicle.rb`
+4) Open a cmd prompt, navigate to the directory you placed the `Lances` folder and `rtUnvehicle.rb`, and type `ruby RTUnvehicle.rb` to run the script
+5) Follow the instructions provided to copy the new Lance files into the RT directory.
+6) Enjoy the game about mechs not having 90% of the spawns be vehicles!
 
 # Future Plans
 I might modify the script in the future depending on how well it does removing vehicles. I may expand it to modify other aspects related to vehicles depending on how I like the results. It will never modify anything beyond things related to vehicle spawns though.
