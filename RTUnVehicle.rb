@@ -2,6 +2,7 @@ begin
     require 'json'
     require 'fileutils'
     require 'date'
+    require_relative 'DefaultMechs'
 
     #Setting up initial variables
     begin
@@ -19,12 +20,13 @@ begin
         puts "Please copy the script and Lances folder to a directory such as C:\\RTUnVehicle\\ and try again"
         exit 0
     end
+
     oldLanceFolder = "./Lances/"
     newLanceFolder = "./NewLances/"
     @logFile = "./unVehicle" + Time.new.strftime("%Y%m%d%H%M%S") + ".log"
     removeVTOLs = false
     userWantsToRemoveVTOLs = ""
-
+    
     #Message logging method
     def log (logMessage)
         begin
@@ -58,15 +60,13 @@ begin
     #sanitize and check user input, set vtol removal flag
     userWantsToRemoveVTOLs = userWantsToRemoveVTOLs.downcase.chomp
 
-    puts userWantsToRemoveVTOLs
-
+    log(userWantsToRemoveVTOLs.to_s)
     if (userWantsToRemoveVTOLs == "y" || userWantsToRemoveVTOLs == "ye" || userWantsToRemoveVTOLs == "yes")
         removeVTOLs = true
     else
         removeVTOLs = false
     end
-
-    puts removeVTOLs.to_s
+    log(removeVTOLs.to_s)
 
     #main script
     begin
@@ -75,53 +75,60 @@ begin
 
         #for each Lance json from the RogueTech files, loop through looking for ones that arent entirely vehicle specific
         lanceFiles.each do |file|
-            if (file.downcase.include?("convoy") || file.downcase.include?("vehicle") || file.downcase.include?("vtol"))
+            #if (file.downcase.include?("convoy") || file.downcase.include?("vehicle") || file.downcase.include?("vtol"))
+            if (file.downcase.include?("convoy") || file.downcase.include?("vtol"))
                 #if the user wants to remove VTOLs, we will do it here
                 if (removeVTOLs)
                     currentFile = File.open(file)
                     jsonObject = JSON.load(currentFile)
                     currentFile.close
 
-                    noVehicleLanceUnitArray = Array.new
+                    noVTOLLanceUnitArray = Array.new
+                    vtolsFoundInUnitTagSet = false
+                    mechFoundInLanceUnit = false
+                    excludeVTOLTagFound = false
+                    lanceDifficulty = jsonObject["Difficulty"]
+                    log("lanceDifficulty = " + lanceDifficulty.to_s)
 
-                    #for vtol removal, we loop through the unitType which sets the base type
-                    #then we check 2 subArrays, unitTagSet and excludedUnitTagSet, modify them to
-                    #remove VTOLs from the spawn list and replace them with tanks
-                    #we also remove the "unit_light" tag , if it exists, from excludedUnitTagSet
-                    #to allow light vehicles to take a VTOLs place
+                    #for vtol removal, 
                     jsonObject["LanceUnits"].each do |unit|                            
-                        noVTOLUnitTagSetArray = Array.new
-                        noVTOLExcludedUnitTagSetArray = Array.new
-                        excludedVTOLTagExistsOrIsAdded = false
+                        noVTOLUnitTagSetArray = Array.new                       
+                        
                         if (unit["unitType"] == "Vehicle")
                             unitTagSet = unit["unitTagSet"]
                             unitTagSet["items"].each do |tag|
                                 if (tag == "unit_vtol")
-                                    noVTOLUnitTagSetArray.push("unit_vehicle")
-                                else
-                                    noVTOLUnitTagSetArray.push(tag)
+                                    vtolsFoundInUnitTagSet = true
                                 end
                             end
-                            excludedUnitTagSet = unit["excludedUnitTagSet"]
-                            excludedUnitTagSet["items"].each do |tag|
-                                if (tag == "unit_light")
-                                    #dont push
-                                elsif (tag == "unit_vtol")
-                                    excludedVTOLTagExistsOrIsAdded = true
-                                else
-                                    noVTOLExcludedUnitTagSetArray.push(tag)
-                                end                                
-                            end
-
-                            if (excludedVTOLTagExistsOrIsAdded == false)
-                                noVTOLExcludedUnitTagSetArray.push("unit_vtol")
-                            end
-                            excludedVTOLTagExistsOrIsAdded = false
+                        elsif (unit["unitType"] == "Mech")
+                            mechFoundInLanceUnit = true
                         end
 
-                        #here we finally push our changes back to the unit before writing to file
-                        unit["unitTagSet"]["items"] = noVTOLUnitTagSetArray
-                        unit["excludedUnitTagSet"]["items"] = noVTOLExcludedUnitTagSetArray
+                        unit["excludedUnitTagSet"]["items"].each do |tag|
+                            if (tag == "unit_vtol")
+                                excludeVTOLTagFound = true;
+                            end
+                        end
+
+                        if (vtolsFoundInUnitTagSet == false)
+                            if (excludeVTOLTagFound == false)
+                                log("Adding vehicle exclude tag")
+                                unit["excludedUnitTagSet"]["items"].push("unit_vtol")
+                            end
+                            noVTOLLanceUnitArray.push(unit)
+                        else
+                            log("Found a VTOL! Replacing with a default mech")
+                            noVTOLLanceUnitArray.push(JSON.parse(DefaultMechs.getDefaultMech(lanceDifficulty)))
+                            mechFoundInLanceUnit = true
+                        end
+                        excludeVTOLTagFound = false
+                    end
+
+                    jsonObject["LanceUnits"] = noVTOLLanceUnitArray
+                    if (mechFoundInLanceUnit == false && file.downcase.include?("convoy") == false && file.downcase.include?("vehicle") == false)
+                        log("No mechs found in lance file " + file.to_s + ", adding a default mech")
+                        jsonObject["LanceUnits"].push(JSON.parse(DefaultMechs.getDefaultMech(lanceDifficulty)))
                     end
 
                     #write the new file with our changes
@@ -146,12 +153,16 @@ begin
 
                 #this Array holds our new Mech-Only Lance
                 noVehicleLanceUnitArray = Array.new
+                lanceDifficulty = jsonObject["Difficulty"]
+                log("lanceDifficulty = " + lanceDifficulty.to_s)
 
                 #This section loops over the possible unit spawns and ignores Vehicle options, putting
                 #the Mech choices into a new list
                 jsonObject["LanceUnits"].each do |unit|
                     if (unit["unitType"] == "Vehicle")
-                        #do nothing with vehicles, we dont want them
+                        #replace with a default mech
+                        log("Replacing a vehicle!")
+                        noVehicleLanceUnitArray.push(JSON.parse(DefaultMechs.getDefaultMech(lanceDifficulty)))
                     else
                         #add non-vehicle definitions to our new Lance definition
                         noVehicleLanceUnitArray.push(unit)
