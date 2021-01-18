@@ -3,6 +3,8 @@ Do you want all the features of RogueTech without having every enemy lance compr
 
 This script will modify the Lance files in roguetech to remove vehicles from nearly every Lance type, except lances that are only comprised of vehicles, and specialty lances made for missions where it is intended you fight vehicles.
 
+As of version 1.2, this script now has the optional ability to completely remove VTOLs from the spawn pool.
+
 # Usage
 1) Download Ruby from https://www.ruby-lang.org/en/downloads/ . Version 2.7 is recommended but anything from 2.6+ should work
 2) Download this ruby script, `RTUnvehicle.rb` and place it in its own directory
