@@ -90,9 +90,12 @@ begin
                     lanceDifficulty = jsonObject["Difficulty"]
                     log("lanceDifficulty = " + lanceDifficulty.to_s)
 
-                    #for vtol removal, 
+                    #for vtol removal, we check each possible Lance unit. 
+                    #If its a VTOL, we replace it with a default mech
+                    #if its a vehicle, we add the "no_vtol" tag to its exclude list if it doesnt have one
+                    #This approach should hopefully avoid issues where there is no spawnable choice available
+                    #We also finally add a mech to non-convoy Lances that dont have at least 1 mech already
                     jsonObject["LanceUnits"].each do |unit|                            
-                        noVTOLUnitTagSetArray = Array.new                       
                         
                         if (unit["unitType"] == "Vehicle")
                             unitTagSet = unit["unitTagSet"]
@@ -126,7 +129,7 @@ begin
                     end
 
                     jsonObject["LanceUnits"] = noVTOLLanceUnitArray
-                    if (mechFoundInLanceUnit == false && file.downcase.include?("convoy") == false && file.downcase.include?("vehicle") == false)
+                    if (mechFoundInLanceUnit == false && file.downcase.include?("convoy") == false)
                         log("No mechs found in lance file " + file.to_s + ", adding a default mech")
                         jsonObject["LanceUnits"].push(JSON.parse(DefaultMechs.getDefaultMech(lanceDifficulty)))
                     end
