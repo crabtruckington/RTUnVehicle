@@ -22,6 +22,8 @@ begin
     oldLanceFolder = "./Lances/"
     newLanceFolder = "./NewLances/"
     @logFile = "./unVehicle" + Time.new.strftime("%Y%m%d%H%M%S") + ".log"
+    removeVTOLs = false
+    userWantsToRemoveVTOLs = ""
 
     #Message logging method
     def log (logMessage)
@@ -41,6 +43,31 @@ begin
         end
     end
 
+    #print info and ask for user input
+    log("Thank you for using the RTUnVehicle script!")
+    log("This script will remove the majority of vehicles from the spawn pool")
+    log("Some vehicles will still remain, specifically vehicles spawned during")
+    log("missions that require vehicles, like Convoys, or missions that")
+    log("tell you your opponents will be a vehicle-based unit")
+    log(" ")
+    log("Optionally, you can completely remove VTOLs from the spawn pool")
+    log("This will likely increase difficulty!")
+    log("Also, some special VTOLs will likely remain (Legendary VTOLs or Named VTOLs)")
+    log("Do you want to remove VTOLs from the spawn pool? (Optional, default no) (y/n):")
+    userWantsToRemoveVTOLs = gets    
+    #sanitize and check user input, set vtol removal flag
+    userWantsToRemoveVTOLs = userWantsToRemoveVTOLs.downcase.chomp
+
+    puts userWantsToRemoveVTOLs
+
+    if (userWantsToRemoveVTOLs == "y" || userWantsToRemoveVTOLs == "ye" || userWantsToRemoveVTOLs == "yes")
+        removeVTOLs = true
+    else
+        removeVTOLs = false
+    end
+
+    puts removeVTOLs.to_s
+
     #main script
     begin
         #create NewLances folder if it doesnt exist yet
@@ -49,12 +76,68 @@ begin
         #for each Lance json from the RogueTech files, loop through looking for ones that arent entirely vehicle specific
         lanceFiles.each do |file|
             if (file.downcase.include?("convoy") || file.downcase.include?("vehicle") || file.downcase.include?("vtol"))
-                #if the lance only includes vehicles, we copy it as is
-                newFileName = file.sub(oldLanceFolder, newLanceFolder)
-                newPath = File.dirname(newFileName)
-                log("Copying New Lance File Untouched... " + newFileName)
-                Dir.mkdir(newPath) unless File.exists?(newPath)
-                File.write(newFileName, File.read(file))
+                #if the user wants to remove VTOLs, we will do it here
+                if (removeVTOLs)
+                    currentFile = File.open(file)
+                    jsonObject = JSON.load(currentFile)
+                    currentFile.close
+
+                    noVehicleLanceUnitArray = Array.new
+
+                    #for vtol removal, we loop through the unitType which sets the base type
+                    #then we check 2 subArrays, unitTagSet and excludedUnitTagSet, modify them to
+                    #remove VTOLs from the spawn list and replace them with tanks
+                    #we also remove the "unit_light" tag , if it exists, from excludedUnitTagSet
+                    #to allow light vehicles to take a VTOLs place
+                    jsonObject["LanceUnits"].each do |unit|                            
+                        noVTOLUnitTagSetArray = Array.new
+                        noVTOLExcludedUnitTagSetArray = Array.new
+                        excludedVTOLTagExistsOrIsAdded = false
+                        if (unit["unitType"] == "Vehicle")
+                            unitTagSet = unit["unitTagSet"]
+                            unitTagSet["items"].each do |tag|
+                                if (tag == "unit_vtol")
+                                    noVTOLUnitTagSetArray.push("unit_vehicle")
+                                else
+                                    noVTOLUnitTagSetArray.push(tag)
+                                end
+                            end
+                            excludedUnitTagSet = unit["excludedUnitTagSet"]
+                            excludedUnitTagSet["items"].each do |tag|
+                                if (tag == "unit_light")
+                                    #dont push
+                                elsif (tag == "unit_vtol")
+                                    excludedVTOLTagExistsOrIsAdded = true
+                                else
+                                    noVTOLExcludedUnitTagSetArray.push(tag)
+                                end                                
+                            end
+
+                            if (excludedVTOLTagExistsOrIsAdded == false)
+                                noVTOLExcludedUnitTagSetArray.push("unit_vtol")
+                            end
+                            excludedVTOLTagExistsOrIsAdded = false
+                        end
+
+                        #here we finally push our changes back to the unit before writing to file
+                        unit["unitTagSet"]["items"] = noVTOLUnitTagSetArray
+                        unit["excludedUnitTagSet"]["items"] = noVTOLExcludedUnitTagSetArray
+                    end
+
+                    #write the new file with our changes
+                    newFileName = file.sub(oldLanceFolder, newLanceFolder)
+                    newPath = File.dirname(newFileName)
+                    log("Copying Updated Lance File To: " + newFileName)
+                    Dir.mkdir(newPath) unless File.exists?(newPath)
+                    File.write(newFileName, JSON.pretty_generate(jsonObject))
+                else                
+                    #if the lance only includes vehicles and the user doesnt want to remove all VTOLs, we copy it as is
+                    newFileName = file.sub(oldLanceFolder, newLanceFolder)
+                    newPath = File.dirname(newFileName)
+                    log("Copying New Lance File Untouched... " + newFileName)
+                    Dir.mkdir(newPath) unless File.exists?(newPath)
+                    File.write(newFileName, File.read(file))
+                end
             else 
                 #if the lance contains combined arms, we will work on it
                 currentFile = File.open(file)
