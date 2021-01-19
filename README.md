@@ -7,7 +7,7 @@ As of version 1.2, this script now has the optional ability to completely remove
 
 # Usage
 1) Download Ruby from https://www.ruby-lang.org/en/downloads/ . Version 2.7 is recommended but anything from 2.6+ should work
-2) Download this ruby script, `RTUnvehicle.rb` and place it in its own directory
+2) Download this ruby script, `RTUnvehicle.rb`, and the companion file `DefaultMechs.rb` and place them in their own directory, I recommend something like `C:\rtUnVehicle`
 3) Go to your BattleTech installation folder, and copy `\Mods\RogueTech Core\Lances` into the same directory as `RTUnvehicle.rb`
 4) Open a cmd prompt, navigate to the directory you placed the `Lances` folder and `rtUnvehicle.rb`, and type `ruby RTUnvehicle.rb` to run the script
 5) Follow the instructions provided to copy the new Lance files into the RT directory.
