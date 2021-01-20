@@ -45,6 +45,20 @@ begin
         end
     end
 
+    #file writer method
+    def saveFile(oldLanceFolder, newLanceFolder, jsonObject, file, writeUntouchedFile)
+        newFileName = file.sub(oldLanceFolder, newLanceFolder)
+        newPath = File.dirname(newFileName)        
+        Dir.mkdir(newPath) unless File.exists?(newPath)
+        if (writeUntouchedFile)
+            log("Writing existing file untouched: " + newFileName)
+            File.write(newFileName, File.read(file))            
+        else
+            log("Copying Updated Lance File To: " + newFileName)
+            File.write(newFileName, JSON.pretty_generate(jsonObject))
+        end
+    end
+
     #print info and ask for user input
     log("Thank you for using the RTUnVehicle script!")
     log("This script will remove the majority of vehicles from the spawn pool")
@@ -76,7 +90,7 @@ begin
         #for each Lance json from the RogueTech files, loop through looking for ones that arent entirely vehicle specific
         lanceFiles.each do |file|
             #if (file.downcase.include?("convoy") || file.downcase.include?("vehicle") || file.downcase.include?("vtol"))
-            if (file.downcase.include?("convoy") || file.downcase.include?("vtol"))
+            if (file.downcase.include?("convoy") || (file.downcase.include?("vtol") && removeVTOLs == false))
                 #if the user wants to remove VTOLs, we will do it here
                 if (removeVTOLs)
                     currentFile = File.open(file)
@@ -135,18 +149,10 @@ begin
                     end
 
                     #write the new file with our changes
-                    newFileName = file.sub(oldLanceFolder, newLanceFolder)
-                    newPath = File.dirname(newFileName)
-                    log("Copying Updated Lance File To: " + newFileName)
-                    Dir.mkdir(newPath) unless File.exists?(newPath)
-                    File.write(newFileName, JSON.pretty_generate(jsonObject))
+                    saveFile(oldLanceFolder, newLanceFolder, jsonObject, file, false)
                 else                
                     #if the lance only includes vehicles and the user doesnt want to remove all VTOLs, we copy it as is
-                    newFileName = file.sub(oldLanceFolder, newLanceFolder)
-                    newPath = File.dirname(newFileName)
-                    log("Copying New Lance File Untouched... " + newFileName)
-                    Dir.mkdir(newPath) unless File.exists?(newPath)
-                    File.write(newFileName, File.read(file))
+                    saveFile(oldLanceFolder, newLanceFolder, jsonObject, file, true)
                 end
             else 
                 #if the lance contains combined arms, we will work on it
@@ -175,11 +181,7 @@ begin
                 jsonObject["LanceUnits"] = noVehicleLanceUnitArray
 
                 #finally, we copy the new Lance json file to the NewLances folder in the proper directory
-                newFileName = file.sub(oldLanceFolder, newLanceFolder)
-                newPath = File.dirname(newFileName)
-                log("Copying Updated Lance File To: " + newFileName)
-                Dir.mkdir(newPath) unless File.exists?(newPath)
-                File.write(newFileName, JSON.pretty_generate(jsonObject))
+                saveFile(oldLanceFolder, newLanceFolder, jsonObject, file, false)
             end
         end
 
